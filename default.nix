@@ -106,10 +106,10 @@ export LPG_LOC=$dir
 export LPG_CONNSTR=postgresql://postgres@localhost?host=$dir/socket
 
 function pg_ctl {
-  ${postgresql}/bin/pg_ctl \
-    -l "$dir"/log \
-    -o "--unix_socket_directories='$dir/socket'" \
-    -o '--listen_addresses=""' \
+  ${postgresql}/bin/pg_ctl \\
+    -l "$dir"/log \\
+    -o "--unix_socket_directories='$dir/socket'" \\
+    -o '--listen_addresses=""' \\
     "\$@"
 }
 export -f pg_ctl
