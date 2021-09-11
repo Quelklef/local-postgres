@@ -118,7 +118,12 @@ EOF
 
   (( $do_sandbox )) && cat <<EOF
 
-trap 'rm -rf "$dir"' EXIT INT TERM
+lpg-sandbox-cleanup() {
+  pg_ctl status >/dev/null && pg_ctl stop
+
+  rm -rf "$dir"
+}
+trap lpg-sandbox-cleanup EXIT INT TERM
 
 EOF
 }
