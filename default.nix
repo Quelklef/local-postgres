@@ -16,7 +16,6 @@ function _main {
     env     ) lpg-env "$@" ;;
     do      ) lpg-do "$@" ;;
     shell   ) lpg-shell "$@" ;;
-    sandbox ) lpg-sandbox "$@" ;;
     *       ) lpg-help ;;
   esac
 }
