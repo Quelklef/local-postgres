@@ -46,7 +46,15 @@ Commands:
           This can come in handy when using 'lpg sandbox'
         - LPG_CONNSTR is set to a PostgrSQL connection string for the
           given lpg instance
-        - PGDATA, PGHOST, and PGPORT are set, and pg_ctl is monkeypatched
+        - PGDATA and PGHOST are set
+        - pg_ctl is monkeypatched to:
+          - log to LOC/log
+          - listen on the unix socket at LOC/socket/.s.PGSQL.5432
+          - not listen on any TPC ports
+          If any of this is undesired behaviour, it can be overturned
+          by passing your own command-line arguments to pg_ctl, i.e.:
+            lpg shell ./pg
+            pg_ctl start -o '--listen_addresses=127.0.0.1'
 
   lpg do LOC CMD...
 
@@ -80,17 +88,6 @@ function lpg-make {
   ${postgresql}/bin/initdb "$dir"/cluster -U postgres || return 1
 }
 
-function _find-unused-tcp-port {
-  ${pkgs.python3}/bin/python3 -c '
-import socket
-s = socket.socket()
-s.bind(("", 0))
-(_, port) = s.getsockname()
-print(port)
-s.close()
-  '
-}
-
 function lpg-env {
   [[ $# = 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
 
@@ -102,20 +99,10 @@ function lpg-env {
     local dir=$(realpath "$1")
   fi
 
-  local running_port=$(ls -A "$dir"/socket | head -n1 | awk -F. '{ print $4 }')
-  if [ -n "$running_port" ]; then
-    local pgport="$running_port"
-  else
-    local pgport=$(_find-unused-tcp-port)
-  fi
-  # ^ Technically, the port should be calculated when 'pg_ctl start' is run;
-  #   This is a race condition.
-
   cat <<EOF
 
 export PGDATA=$dir/cluster
 export PGHOST=$dir/socket
-export PGPORT=$pgport
 
 export LPG_IN_SHELL=1
 export LPG_LOC=$dir
@@ -125,6 +112,7 @@ function pg_ctl {
   ${postgresql}/bin/pg_ctl \
     -l "\$LPG_LOC"/log \
     -o "--unix_socket_directories='\$LPG_LOC/socket'" \
+    -o '--listen_addresses=""' \
     "\$@"
 }
 export -f pg_ctl
