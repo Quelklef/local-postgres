@@ -86,7 +86,10 @@ function lpg-make {
 function lpg-env {
   [[ $# = 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
 
-  if [ "$1" = --sandbox ]; then
+  do_sandbox=
+  [ "$1" = --sandbox ] && do_sandbox=1 || do_sandbox=0
+
+  if (( $do_sandbox )); then
     local dir=$(mktemp -du)
     lpg-make "$dir" >/dev/null || return 1
   else
@@ -111,6 +114,12 @@ function pg_ctl {
     "\$@"
 }
 export -f pg_ctl
+
+EOF
+
+  (( $do_sandbox )) && cat <<EOF
+
+trap 'rm -rf "$dir"' EXIT INT TERM
 
 EOF
 }

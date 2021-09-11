@@ -30,3 +30,10 @@ testing "sandbox, query"
 reuslt=$(echo $'pg_ctl start && psql -U postgres -tc "SELECT 1, 2;"' | lpg shell --sandbox)
 echo "result: $result"
 [ "$result" = '        1 |        2' ] || exit 1
+
+# ---------------------------------------------------------------------------- #
+testing "sandbox: cleans up temp dir?"
+loc=$(echo 'echo "$LPG_LOC"' | lpg shell --sandbox)
+echo "loc: $loc"
+[ -n "$loc" ] || exit 1
+[ ! -e "$loc" ] || exit 1
