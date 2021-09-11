@@ -58,7 +58,7 @@ Commands:
   lpg do <loc> <cmd>...
 
       Run a command on an lpg instance without affecting the shell
-      Ex: lpg-do ./pg psql -U postgres
+      Ex: lpg-do ./pg psql -U postgres -tc 'SELECT * FROM mytable;'
 
   lpg env (<loc> | --sandbox)
 
