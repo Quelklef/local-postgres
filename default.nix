@@ -33,17 +33,16 @@ Commands:
       The instance will be initialized with a superuser named 'postgres'
       Ex: lpg-make ./pg
 
-  lpg shell (<loc> | --anon)
+  lpg shell (<loc> | --sandbox)
 
       Enter an interactive shell with a modified environment such that libpq
       commands, like psql and pg_ctl, will use the lpg instance at <loc>.
 
-      If '--anon' is given, use a temporary anonymous lpg instance instead
+      If '--sandbox' is given, use a temporary anonymous lpg instance instead
 
       Environment modifications are:
         - LPG_IN_SHELL is set to '1'
         - LPG_LOC is set to an absolute version of <loc>
-          This can come in handy when using 'lpg sandbox'
         - LPG_CONNSTR is set to a PostgrSQL connection string for the
           given lpg instance
         - PGDATA and PGHOST are set
@@ -61,15 +60,11 @@ Commands:
       Run a command on an lpg instance without affecting the shell
       Ex: lpg-do ./pg psql -U postgres
 
-  lpg env (<loc> | --anon)
+  lpg env (<loc> | --sandbox)
 
       Like 'lpg shell', but instead of entering an interactive shell, prints
       a sourceable bash script.
-      Ex: source <(lpg env --anon) && pg_ctl start
-
-  lpg sandbox
-
-      Synonym for 'lpg shell --anon'
+      Ex: source <(lpg env --sandbox) && pg_ctl start
 
   lpg help
 
@@ -91,7 +86,7 @@ function lpg-make {
 function lpg-env {
   [[ $# = 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
 
-  if [ "$1" = --anon ]; then
+  if [ "$1" = --sandbox ]; then
     local dir=$(mktemp -du)
     lpg-make "$dir" >/dev/null || return 1
   else
@@ -122,10 +117,6 @@ EOF
 
 function lpg-shell {
   ( source <(lpg-env "$@") && bash )
-}
-
-function lpg-sandbox {
-  lpg-shell --anon
 }
 
 function lpg-do {
