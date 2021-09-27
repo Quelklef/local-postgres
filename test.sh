@@ -22,17 +22,19 @@ fail() {
   exit 1
 }
 
+export LC_ALL=C.UTF-8  # pg needs it for some reason
+
 # ---------------------------------------------------------------------------- #
 testing "create, start, query"
 lpg make ./testdir/pg
 lpg do ./testdir/pg pg_ctl start
-result=$(lpg do ./testdir/pg psql -U postgres -tc 'SELECT 1, 2;')
+result=$(lpg do ./testdir/pg psql -tc 'SELECT 1, 2;')
 echo "result: $result"
 [ "$result" = '        1 |        2' ] || fail
 
 # ---------------------------------------------------------------------------- #
 testing "sandbox, query"
-reuslt=$(echo $'pg_ctl start && psql -U postgres -tc "SELECT 1, 2;"' | lpg shell --sandbox)
+reuslt=$(echo $'pg_ctl start && psql -tc "SELECT 1, 2;"' | lpg shell --sandbox)
 echo "result: $result"
 [ "$result" = '        1 |        2' ] || fail
 

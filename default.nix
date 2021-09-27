@@ -45,14 +45,15 @@ Commands:
         - LPG_CONNSTR is set to a PostgrSQL connection string for the
           given lpg instance
         - PGDATA and PGHOST are set
-        - pg_ctl is monkeypatched to:
-          - log to <loc>/log
-          - listen on the unix socket at <loc>/socket/.s.PGSQL.5432
-          - not listen on any TPC ports
-          If any of this is undesired behaviour, it can be overturned
-          by passing your own command-line arguments to pg_ctl, i.e.:
-            lpg shell ./pg
-            pg_ctl start -o '--listen_addresses=127.0.0.1'
+        - pg_ctl and psql are monkeypatched
+          pg_ctl:
+            - log to <loc>/log
+            - listen on the unix socket at <loc>/socket/.s.PGSQL.5432
+            - not listen on any TPC ports
+          psql:
+            - log in with user postgres by default instead of $USER
+          Note that this behaviour can be overturned by passing your
+          own CLI arguments, e.g. 'psql -U $USER'
 
   lpg do <loc> <cmd>...
 
@@ -113,6 +114,13 @@ function pg_ctl {
     "\$@"
 }
 export -f pg_ctl
+
+function psql {
+  ${postgresql}/bin/psql \\
+    -U postgres \\
+    "\$@"
+}
+export -f psql
 
 EOF
 
