@@ -8,7 +8,7 @@ script = ''
 #!${pkgs.bash}/bin/bash
 
 function lpg-help {
-  cat <<EOF | less
+  cat <<EOF
 lpg (Local PostGres): manage local PostgreSQL instances
 
 
