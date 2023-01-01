@@ -11,11 +11,12 @@ function _main {
   local cmd="$1"; shift;
 
   case "$cmd" in
-    help    ) lpg-help "$@" ;;
     make    ) lpg-make "$@" ;;
     env     ) lpg-env "$@" ;;
     do      ) lpg-do "$@" ;;
     shell   ) lpg-shell "$@" ;;
+
+    help    ) lpg-help "$@" ;;
     *       ) lpg-help ;;
   esac
 }
@@ -30,7 +31,7 @@ Commands:
 
       Create an lpg-managed PostgreSQL instance at the specified location.
       The instance will be initialized with a superuser named 'postgres'
-      Ex: lpg-make ./pg
+      Ex: lpg make ./pg
 
   lpg shell (<loc> | --sandbox)
 
@@ -42,15 +43,14 @@ Commands:
       Environment modifications are:
         - LPG_IN_SHELL is set to '1'
         - LPG_LOC is set to an absolute version of <loc>
-        - LPG_CONNSTR is set to a PostgrSQL connection string for the
+        - LPG_CONNSTR is set to a PostgreSQL connection string for the
           given lpg instance
         - PGDATA and PGHOST are set
-        - pg_ctl and psql are monkeypatched
-          pg_ctl:
+        - pg_ctl is monkeypatched to:
             - log to <loc>/log
             - listen on the unix socket at <loc>/socket/.s.PGSQL.5432
             - not listen on any TPC ports
-          psql:
+        - psql is monkeypatched to:
             - log in with user postgres by default instead of $USER
           Note that this behaviour can be overturned by passing your
           own CLI arguments, e.g. 'psql -U $USER'
