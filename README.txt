@@ -1,4 +1,3 @@
-```
 lpg (Local PostGres): manage local PostgreSQL instances
 
 
@@ -56,12 +55,22 @@ Derived Commands:
       Ex: lpg bash ./pg 'pg_ctl stop && pg_ctl start'
 
   lpg pg-start <loc>
-      Start an lpg instance. Same as: lpg cmd <loc> pg_ctl start
+      Start an lpg instance.
+      Equivalent to: lpg cmd <loc> pg_ctl start
+
+  lpg pg-up <loc>
+      Start an lpg instance if it is not already running
+      Equivalent to: lpg bash <loc> 'pg_ctl status || pg_ctl start'
 
   lpg pg-stop <loc>
-      Stop an lpg instance. Same as: lpg cmd <loc> pg_ctl stop
+      Stop an lpg instance.
+      Equivalent to: lpg cmd <loc> pg_ctl stop
+
+  lpg pg-down <loc>
+      Stop an lpg instance if it is running
+      Equivalent to: lpg bash <loc> 'if pg_ctl status; then pg_ctl stop; else true; fi'
 
   lpg pg-restart <loc>
-      Restart an lpg instance. Same as: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
+      Restart an lpg instance.
+      Equivalent to: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
 
-```

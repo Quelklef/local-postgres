@@ -66,13 +66,24 @@ Derived Commands:
       Ex: lpg bash ./pg 'pg_ctl stop && pg_ctl start'
 
   lpg pg-start <loc>
-      Start an lpg instance. Same as: lpg cmd <loc> pg_ctl start
+      Start an lpg instance.
+      Equivalent to: lpg cmd <loc> pg_ctl start
 
   lpg pg-stop <loc>
-      Stop an lpg instance. Same as: lpg cmd <loc> pg_ctl stop
+      Stop an lpg instance.
+      Equivalent to: lpg cmd <loc> pg_ctl stop
 
   lpg pg-restart <loc>
-      Restart an lpg instance. Same as: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
+      Restart an lpg instance.
+      Equivalent to: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
+
+  lpg pg-up <loc>
+      Start an lpg instance if it is not already running
+      Equivalent to: lpg bash <loc> 'pg_ctl status || pg_ctl start'
+
+  lpg pg-down <loc>
+      Stop an lpg instance if it is running
+      Equivalent to: lpg bash <loc> 'if pg_ctl status; then pg_ctl stop; else true; fi'
 
 EOF
 }
@@ -161,7 +172,7 @@ function lpg-bash {
   ( source <(lpg-env "$dir") && bash -c "$str" )
 }
 
-function lpg-pg-start_stop_restart {
+function lpg-pg-smth {
   local str=$1; shift;
   [[ $# -eq 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
   [[ -d "$1" ]] || { echo >&2 "$1 does not exist or is not a directory."; return 1; }
@@ -170,9 +181,11 @@ function lpg-pg-start_stop_restart {
   ( source <(lpg-env "$dir") && bash -c "$str" )
 }
 
-function lpg-pg-start   { lpg-pg-start_stop_restart 'pg_ctl start'   "$@"; }
-function lpg-pg-stop    { lpg-pg-start_stop_restart 'pg_ctl stop'    "$@"; }
-function lpg-pg-restart { lpg-pg-start_stop_restart 'pg_ctl restart' "$@"; }
+function lpg-pg-start   { lpg-pg-smth 'pg_ctl start'   "$@"; }
+function lpg-pg-stop    { lpg-pg-smth 'pg_ctl stop'    "$@"; }
+function lpg-pg-restart { lpg-pg-smth 'pg_ctl restart' "$@"; }
+function lpg-pg-up      { lpg-pg-smth 'pg_ctl status || pg_ctl start' "$@"; }
+function lpg-pg-down    { lpg-pg-smth 'if pg_ctl status; then pg_ctl stop; else true; fi' "$@"; }
 
 
 function _main {
@@ -190,6 +203,8 @@ function _main {
     pg-start   ) lpg-pg-start "$@" ;;
     pg-stop    ) lpg-pg-stop "$@" ;;
     pg-restart ) lpg-pg-restart "$@" ;;
+    pg-up      ) lpg-pg-up "$@" ;;
+    pg-down    ) lpg-pg-down "$@" ;;
 
     # Help
     help       ) lpg-help "$@" ;;

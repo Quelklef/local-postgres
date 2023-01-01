@@ -57,13 +57,21 @@ kill -0 "$pg_pid" 2>/dev/null && is_running=1 || is_running=0
 # ---------------------------------------------------------------------------- #
 testing "convenience commands"
 echo '~~ make'
-lpg make ./testdir/pg
+lpg make ./testdir/pg ; echo "$?"
 echo '~~ start'
-lpg pg-start ./testdir/pg
+lpg pg-start ./testdir/pg ; echo "$?"
 echo '~~ restart'
-lpg pg-restart ./testdir/pg
+lpg pg-restart ./testdir/pg ; echo "$?"
 echo '~~ stop'
-lpg pg-stop ./testdir/pg
+lpg pg-stop ./testdir/pg ; echo "$?"
+echo '~~ up'
+lpg pg-up ./testdir/pg ; echo "$?"
+echo '~~ up'
+lpg pg-up ./testdir/pg ; echo "$?"
+echo '~~ down'
+lpg pg-down ./testdir/pg ; echo "$?"
+echo '~~ down'
+lpg pg-down ./testdir/pg ; echo "$?"
 echo '~~ echo LPG_LOC'
 out=$(lpg bash ./testdir/pg 'echo $LPG_LOC')
 echo "$out"
