@@ -20,12 +20,17 @@ Basic Commands:
       The instance will be initialized with a superuser named 'postgres'
       Ex: lpg make ./pg
 
-  lpg shell (<loc> | --sandbox)
+  lpg shell (<loc> | --sandbox) [--auto | -a]
 
       Enter an interactive shell with a modified environment such that libpq
       commands, like psql and pg_ctl, will use the lpg instance at <loc>.
 
-      If '--sandbox' is given, use a temporary anonymous lpg instance instead
+      If '--sandbox' is given, use a temporary anonymous lpg instance instead.
+      The instance will be stopped when the shell exits.
+
+      If '--auto' is given, start the instance when the shell is
+      entered (unless it is already running), and stop the instance when the
+      shell is exited (unless it has already stopped).
 
       Environment modifications are:
         - LPG_IN_SHELL is set to '1'
@@ -42,7 +47,7 @@ Basic Commands:
           Note that this behaviour can be overturned by passing your
           own CLI arguments, e.g. 'psql -U $USER'
 
-  lpg env (<loc> | --sandbox)
+  lpg env (<loc> | --sandbox) [--auto | -a]
 
       Like 'lpg shell', but instead of entering an interactive shell, prints
       a sourceable bash script.
@@ -99,10 +104,14 @@ function lpg-make {
 }
 
 function lpg-env {
-  [[ $# = 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
+  [[ $# -ge 1 ]] || { echo >&2 "Expected at least 1 argument"; return 1; }
+  [[ $# -le 2 ]] || { echo >&2 "Expected at most 2 arguments"; return 1; }
 
   do_sandbox=
   [ "$1" = --sandbox ] && do_sandbox=1 || do_sandbox=0
+
+  do_auto=
+  [ "$2" = '--auto' -o "$2" = '-a' ] && do_auto=1 || do_auto=0
 
   if (( $do_sandbox )); then
     local dir=$(mktemp -du)
@@ -139,16 +148,22 @@ export -f psql
 
 EOF
 
-  (( $do_sandbox )) && cat <<EOF
-
-lpg-sandbox-cleanup() {
-  pg_ctl status >/dev/null && pg_ctl stop
-
-  rm -rf "$dir"
-}
-trap lpg-sandbox-cleanup EXIT INT TERM
-
+  (( $do_auto )) && cat <<EOF
+pg_ctl status >/dev/null || pg_ctl start
 EOF
+
+  # Remark: bash 'trap' overrides previous 'trap' calls
+
+  (( $do_sandbox )) && cat <<EOF
+lpg-cleanup() { pg_ctl status >/dev/null && pg_ctl stop; rm -rf "$dir"; }
+trap lpg-cleanup EXIT INT TERM
+EOF
+
+  (( $do_auto && !$do_sandbox )) && cat <<EOF
+lpg-cleanup() { pg_ctl status >/dev/null && pg_ctl stop; }
+trap lpg-cleanup EXIT INT TERM
+EOF
+
 }
 
 function lpg-shell {

@@ -29,14 +29,31 @@ testing "create, start, query"
 lpg make ./testdir/pg
 lpg cmd ./testdir/pg pg_ctl start
 result=$(lpg cmd ./testdir/pg psql -tc 'SELECT 1, 2;')
-echo "result: $result"
+echo "result: 〈$result〉"
 [ "$result" = '        1 |        2' ] || fail
 
 # ---------------------------------------------------------------------------- #
-testing "sandbox, query"
-reuslt=$(echo $'pg_ctl start && psql -tc "SELECT 1, 2;"' | lpg shell --sandbox)
-echo "result: $result"
-[ "$result" = '        1 |        2' ] || fail
+testing "create, query, auto"
+lpg make ./testdir/pg
+result=$(echo 'psql -tc "SELECT 1, 2;"' | lpg shell ./testdir/pg --auto)
+echo "result: 〈$result〉"
+[[ $result == *'        1 |        2'* ]] || fail
+
+# ---------------------------------------------------------------------------- #
+testing "create, query, auto: cleans up pg process?"
+lpg make ./testdir/pg
+out=$(echo 'echo "$LPG_LOC" && pg_ctl status' | lpg shell ./testdir/pg --auto)
+echo "$out"
+pg_pid=$(echo "$out" | grep -oP '(?<=PID: )[0-9]+')
+echo "pg pid: $pg_pid"
+kill -0 "$pg_pid" 2>/dev/null && is_running=1 || is_running=0
+(( $is_running )) && fail || true
+
+# ---------------------------------------------------------------------------- #
+testing "sandbox, auto, query"
+result=$(echo $'psql -tc "SELECT 1, 2;"' | lpg shell --sandbox -a)
+echo "result: 〈$result〉"
+[[ $result == *'        1 |        2'* ]] || fail
 
 # ---------------------------------------------------------------------------- #
 testing "sandbox: cleans up temp dir?"

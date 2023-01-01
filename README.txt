@@ -9,12 +9,17 @@ Basic Commands:
       The instance will be initialized with a superuser named 'postgres'
       Ex: lpg make ./pg
 
-  lpg shell (<loc> | --sandbox)
+  lpg shell (<loc> | --sandbox) [--auto | -a]
 
       Enter an interactive shell with a modified environment such that libpq
       commands, like psql and pg_ctl, will use the lpg instance at <loc>.
 
-      If '--sandbox' is given, use a temporary anonymous lpg instance instead
+      If '--sandbox' is given, use a temporary anonymous lpg instance instead.
+      The instance will be stopped when the shell exits.
+
+      If '--auto' is given, start the instance when the shell is
+      entered (unless it is already running), and stop the instance when the
+      shell is exited (unless it has already stopped).
 
       Environment modifications are:
         - LPG_IN_SHELL is set to '1'
@@ -31,7 +36,7 @@ Basic Commands:
           Note that this behaviour can be overturned by passing your
           own CLI arguments, e.g. 'psql -U sock'
 
-  lpg env (<loc> | --sandbox)
+  lpg env (<loc> | --sandbox) [--auto | -a]
 
       Like 'lpg shell', but instead of entering an interactive shell, prints
       a sourceable bash script.
@@ -58,19 +63,19 @@ Derived Commands:
       Start an lpg instance.
       Equivalent to: lpg cmd <loc> pg_ctl start
 
-  lpg pg-up <loc>
-      Start an lpg instance if it is not already running
-      Equivalent to: lpg bash <loc> 'pg_ctl status || pg_ctl start'
-
   lpg pg-stop <loc>
       Stop an lpg instance.
       Equivalent to: lpg cmd <loc> pg_ctl stop
 
-  lpg pg-down <loc>
-      Stop an lpg instance if it is running
-      Equivalent to: lpg bash <loc> 'if pg_ctl status; then pg_ctl stop; else true; fi'
-
   lpg pg-restart <loc>
       Restart an lpg instance.
       Equivalent to: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
+
+  lpg pg-up <loc>
+      Start an lpg instance if it is not already running
+      Equivalent to: lpg bash <loc> 'pg_ctl status || pg_ctl start'
+
+  lpg pg-down <loc>
+      Stop an lpg instance if it is running
+      Equivalent to: lpg bash <loc> 'if pg_ctl status; then pg_ctl stop; else true; fi'
 
