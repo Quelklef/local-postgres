@@ -27,8 +27,8 @@ export LC_ALL=C.UTF-8  # pg needs it for some reason
 # ---------------------------------------------------------------------------- #
 testing "create, start, query"
 lpg make ./testdir/pg
-lpg do ./testdir/pg pg_ctl start
-result=$(lpg do ./testdir/pg psql -tc 'SELECT 1, 2;')
+lpg cmd ./testdir/pg pg_ctl start
+result=$(lpg cmd ./testdir/pg psql -tc 'SELECT 1, 2;')
 echo "result: $result"
 [ "$result" = '        1 |        2' ] || fail
 
@@ -53,3 +53,18 @@ pg_pid=$(echo "$out" | grep -oP '(?<=PID: )[0-9]+')
 echo "pg pid: $pg_pid"
 kill -0 "$pg_pid" 2>/dev/null && is_running=1 || is_running=0
 (( $is_running )) && fail || true
+
+# ---------------------------------------------------------------------------- #
+testing "convenience commands"
+echo '~~ make'
+lpg make ./testdir/pg
+echo '~~ start'
+lpg pg-start ./testdir/pg
+echo '~~ restart'
+lpg pg-restart ./testdir/pg
+echo '~~ stop'
+lpg pg-stop ./testdir/pg
+echo '~~ echo LPG_LOC'
+out=$(lpg bash ./testdir/pg 'echo $LPG_LOC')
+echo "$out"
+[ "$out" = "$(realpath ./testdir/pg)" ] || fail

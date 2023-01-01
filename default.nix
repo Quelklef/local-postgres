@@ -7,25 +7,12 @@ let
 script = ''
 #!${pkgs.bash}/bin/bash
 
-function _main {
-  local cmd="$1"; shift;
-
-  case "$cmd" in
-    make    ) lpg-make "$@" ;;
-    env     ) lpg-env "$@" ;;
-    do      ) lpg-do "$@" ;;
-    shell   ) lpg-shell "$@" ;;
-
-    help    ) lpg-help "$@" ;;
-    *       ) lpg-help ;;
-  esac
-}
-
 function lpg-help {
   cat <<EOF | less
 lpg (Local PostGres): manage local PostgreSQL instances
 
-Commands:
+
+Basic Commands:
 
   lpg make <loc>
 
@@ -55,11 +42,6 @@ Commands:
           Note that this behaviour can be overturned by passing your
           own CLI arguments, e.g. 'psql -U $USER'
 
-  lpg do <loc> <cmd>...
-
-      Run a command on an lpg instance without affecting the shell
-      Ex: lpg-do ./pg psql -U postgres -tc 'SELECT * FROM mytable;'
-
   lpg env (<loc> | --sandbox)
 
       Like 'lpg shell', but instead of entering an interactive shell, prints
@@ -69,6 +51,28 @@ Commands:
   lpg help
 
       Show this message
+
+
+Derived Commands:
+
+  Convenience commands built on top of the basic commands
+
+  lpg cmd <loc> <cmd>...
+      Run a command on an lpg instance without affecting the shell
+      Ex: lpg cmd ./pg psql -U postgres -tc 'SELECT * FROM mytable;'
+
+  lpg bash <loc> <str>
+      Run a bash command on an lpg instance
+      Ex: lpg bash ./pg 'pg_ctl stop && pg_ctl start'
+
+  lpg pg-start <loc>
+      Start an lpg instance. Same as: lpg cmd <loc> pg_ctl start
+
+  lpg pg-stop <loc>
+      Stop an lpg instance. Same as: lpg cmd <loc> pg_ctl stop
+
+  lpg pg-restart <loc>
+      Restart an lpg instance. Same as: lpg bash <loc> 'pg_ctl stop && pg_ctl start'
 
 EOF
 }
@@ -140,12 +144,57 @@ function lpg-shell {
   ( source <(lpg-env "$@") && bash )
 }
 
-function lpg-do {
-  [[ $# -gt 1 ]] || { echo >&2 "Expected 2 or more arguments"; return 1; }
+function lpg-cmd {
+  [[ $# -ge 2 ]] || { echo >&2 "Expected 2 or more arguments"; return 1; }
   [[ -d "$1" ]] || { echo >&2 "$1 does not exist or is not a directory."; return 1; }
   local dir=$1; shift;
 
   ( source <(lpg-env "$dir") && "$@" )
+}
+
+function lpg-bash {
+  [[ $# -eq 2 ]] || { echo >&2 "Expected exactly 2 arguments"; return 1; }
+  [[ -d "$1" ]] || { echo >&2 "$1 does not exist or is not a directory."; return 1; }
+  local dir=$1; shift;
+  local str=$1; shift;
+
+  ( source <(lpg-env "$dir") && bash -c "$str" )
+}
+
+function lpg-pg-start_stop_restart {
+  local str=$1; shift;
+  [[ $# -eq 1 ]] || { echo >&2 "Expected exactly 1 argument"; return 1; }
+  [[ -d "$1" ]] || { echo >&2 "$1 does not exist or is not a directory."; return 1; }
+  local dir=$1; shift;
+
+  ( source <(lpg-env "$dir") && bash -c "$str" )
+}
+
+function lpg-pg-start   { lpg-pg-start_stop_restart 'pg_ctl start'   "$@"; }
+function lpg-pg-stop    { lpg-pg-start_stop_restart 'pg_ctl stop'    "$@"; }
+function lpg-pg-restart { lpg-pg-start_stop_restart 'pg_ctl restart' "$@"; }
+
+
+function _main {
+  local cmd_name="$1"; shift;
+
+  case "$cmd_name" in
+    # Basic commands
+    make       ) lpg-make "$@" ;;
+    env        ) lpg-env "$@" ;;
+    shell      ) lpg-shell "$@" ;;
+
+    # Derived commands
+    cmd        ) lpg-cmd "$@" ;;
+    bash       ) lpg-bash "$@" ;;
+    pg-start   ) lpg-pg-start "$@" ;;
+    pg-stop    ) lpg-pg-stop "$@" ;;
+    pg-restart ) lpg-pg-restart "$@" ;;
+
+    # Help
+    help       ) lpg-help "$@" ;;
+    *          ) lpg-help ;;
+  esac
 }
 
 _main "$@"
